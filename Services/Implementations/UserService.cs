@@ -53,8 +53,8 @@ public class UserService(IConfiguration configuration, UserManager<User> userMan
 
         List<Claim> claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, user.UserName),
-            new Claim(ClaimTypes.Email, user.Email)
+            new Claim(ClaimTypes.Name, user.UserName ?? throw new InvalidOperationException("User has no username.")),
+            new Claim(ClaimTypes.Email, user.Email ?? throw new InvalidOperationException("User has no email."))
         };
 
         JwtSecurityToken token = GetToken(claims);
