@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using PostHubAPI.Configuration;
 using PostHubAPI.Data;
 using PostHubAPI.Models;
 using PostHubAPI.Services.Implementations;
@@ -10,6 +11,8 @@ using PostHubAPI.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
+var isDevelopment = builder.Environment.IsDevelopment();
+var jwtSettings = JwtSettingsResolver.Resolve(configuration);
 
 // Add services to the container.
 
@@ -22,7 +25,17 @@ builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
-builder.Services.AddDbContext<ApplicationDbContext>(opts => opts.UseInMemoryDatabase("PostHubApi.db"));
+if (isDevelopment)
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(opts =>
+        opts.UseInMemoryDatabase("PostHubApi.db"));
+}
+else
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(opts =>
+        opts.UseSqlite(configuration.GetConnectionString("DefaultConnection")
+            ?? "Data Source=posthub.db"));
+}
 
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -37,14 +50,14 @@ builder.Services.AddAuthentication(opts =>
 }).AddJwtBearer(opts =>
 {
     opts.SaveToken = true;
-    opts.RequireHttpsMetadata = false;
+    opts.RequireHttpsMetadata = !isDevelopment;
     opts.TokenValidationParameters = new TokenValidationParameters()
     {
         ValidateIssuer = true,
         ValidateAudience = true,
-        ValidAudience = configuration["JWT:ValidAudience"],
-        ValidIssuer = configuration["JWT:ValidIssuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
+        ValidAudience = jwtSettings.ValidAudience,
+        ValidIssuer = jwtSettings.ValidIssuer,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret))
     };
 });
 
@@ -68,3 +81,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program
+{
+}
