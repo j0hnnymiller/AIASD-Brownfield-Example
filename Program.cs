@@ -25,7 +25,17 @@ builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
-builder.Services.AddDbContext<ApplicationDbContext>(opts => opts.UseInMemoryDatabase("PostHubApi.db"));
+if (isDevelopment)
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(opts =>
+        opts.UseInMemoryDatabase("PostHubApi.db"));
+}
+else
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(opts =>
+        opts.UseSqlite(configuration.GetConnectionString("DefaultConnection")
+            ?? "Data Source=posthub.db"));
+}
 
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
