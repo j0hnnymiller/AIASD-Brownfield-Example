@@ -1,16 +1,11 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using PostHubAPI.Dtos.User;
 using PostHubAPI.Models;
 using PostHubAPI.Services.Interfaces;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using PostHubAPI.Configuration;
 
 namespace PostHubAPI.Services.Implementations;
 
-public class UserService(IConfiguration configuration, UserManager<User> userManager)
+public class UserService(ITokenService tokenService, UserManager<User> userManager)
     : IUserService
 {
     public async Task<string> Register(RegisterUserDto dto)
@@ -51,31 +46,7 @@ public class UserService(IConfiguration configuration, UserManager<User> userMan
             throw new ArgumentException($"Unable to authenticate user {dto.Username}!");
         }
 
-        List<Claim> claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, user.UserName ?? throw new InvalidOperationException("User has no username.")),
-            new Claim(ClaimTypes.Email, user.Email ?? throw new InvalidOperationException("User has no email."))
-        };
-
-        JwtSecurityToken token = GetToken(claims);
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    private JwtSecurityToken GetToken(IEnumerable<Claim> claims)
-    {
-        JwtSettings jwtSettings = JwtSettingsResolver.Resolve(configuration);
-        SymmetricSecurityKey authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret));
-
-        JwtSecurityToken token = new JwtSecurityToken
-        (
-            issuer: jwtSettings.ValidIssuer,
-            audience: jwtSettings.ValidAudience,
-            expires: DateTime.Now.AddHours(3),
-            claims: claims,
-            signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-        );
-
-        return token;
+        return tokenService.CreateToken(user);
     }
 
     private static string GetErrorsText(IEnumerable<IdentityError> errors)
