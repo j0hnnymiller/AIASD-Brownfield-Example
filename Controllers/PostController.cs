@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PostHubAPI.Dtos.Post;
 using PostHubAPI.Exceptions;
 using PostHubAPI.Services.Interfaces;
@@ -32,6 +33,7 @@ public class PostController(IPostService postService) : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> CreatePost([FromBody] CreatePostDto dto)
     {
@@ -45,6 +47,7 @@ public class PostController(IPostService postService) : ControllerBase
         return BadRequest(ModelState);
     }
 
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> EditPost(int id, EditPostDto dto)
     {
@@ -64,6 +67,7 @@ public class PostController(IPostService postService) : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeletePost(int id)
     {

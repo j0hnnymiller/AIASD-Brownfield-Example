@@ -6,6 +6,7 @@ using PostHubAPI.Models;
 using PostHubAPI.Services.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using PostHubAPI.Configuration;
 
 namespace PostHubAPI.Services.Implementations;
 
@@ -40,7 +41,7 @@ public class UserService(IConfiguration configuration, UserManager<User> userMan
     public async Task<string> Login(LoginUserDto dto)
     {
         User? user = await userManager.FindByNameAsync(dto.Username);
-        if (user == null) 
+        if (user == null)
         {
             throw new ArgumentException($"Name {dto.Username} is not registered!");
         }
@@ -55,19 +56,20 @@ public class UserService(IConfiguration configuration, UserManager<User> userMan
             new Claim(ClaimTypes.Name, user.UserName),
             new Claim(ClaimTypes.Email, user.Email)
         };
-        
+
         JwtSecurityToken token = GetToken(claims);
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     private JwtSecurityToken GetToken(IEnumerable<Claim> claims)
     {
-        SymmetricSecurityKey authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]));
+        JwtSettings jwtSettings = JwtSettingsResolver.Resolve(configuration);
+        SymmetricSecurityKey authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret));
 
         JwtSecurityToken token = new JwtSecurityToken
         (
-            issuer: configuration["JWT:Issuer"],
-            audience: configuration["JWT:Audience"],
+            issuer: jwtSettings.ValidIssuer,
+            audience: jwtSettings.ValidAudience,
             expires: DateTime.Now.AddHours(3),
             claims: claims,
             signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
@@ -75,7 +77,7 @@ public class UserService(IConfiguration configuration, UserManager<User> userMan
 
         return token;
     }
-    
+
     private static string GetErrorsText(IEnumerable<IdentityError> errors)
     {
         return string.Join(", ", errors.Select(error => error.Description).ToArray());
