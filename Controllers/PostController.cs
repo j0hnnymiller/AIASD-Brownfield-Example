@@ -33,17 +33,29 @@ public class PostController(IPostService postService) : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Creates a new post. Requires authorization.
+    /// </summary>
+    /// <param name="dto">The post data transfer object containing post details</param>
+    /// <returns>Created status with location URI and new post ID if successful; BadRequest if model is invalid</returns>
     [Authorize]
     [HttpPost]
     public async Task<IActionResult> CreatePost([FromBody] CreatePostDto dto)
     {
+        // Validate the model state before proceeding
         if (ModelState.IsValid)
         {
+            // Create the new post and get its ID
             var newPostId = await _postService.CreateNewPostAsync(dto);
+
+            // Build the URI for the newly created resource
             var locationUri = $"{Request.Scheme}://{Request.Host}/api/Post/{newPostId}";
+
+            // Return 201 Created with the location and ID
             return Created(locationUri, newPostId);
         }
 
+        // Return 400 Bad Request if validation fails
         return BadRequest(ModelState);
     }
 
@@ -76,7 +88,7 @@ public class PostController(IPostService postService) : ControllerBase
             await _postService.DeletePostAsync(id);
             return NoContent();
         }
-        catch(NotFoundException exception)
+        catch (NotFoundException exception)
         {
             return NotFound(exception.Message);
         }

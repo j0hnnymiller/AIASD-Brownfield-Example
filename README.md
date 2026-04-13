@@ -15,54 +15,10 @@ The **PostHubAPI** is a blog API that provides complete CRUD (Create, Read, Upda
 - **CRUD for Comments**: Manage comments associated with each post.
 - **User Registration**: Enable user registration and management to interact with the blog.
 
-## How to Use
+## Documentation
 
-1. **Clone the Repository**:
+- [docs/posthubapi-architecture.md](docs/posthubapi-architecture.md) contains C4 context, container, and component diagrams for the current ASP.NET Core API. Provenance log: [ai-logs/2026/04/07/40697613-907e-4eb7-8cee-31463c338ddc/conversation.md](ai-logs/2026/04/07/40697613-907e-4eb7-8cee-31463c338ddc/conversation.md).
+- [docs/developer-guide.md](docs/developer-guide.md) contains local setup, configuration, test workflow, and repository structure notes for contributors. Provenance log: [ai-logs/2026/04/07/24aba72b-f0e6-43b8-9fdf-d51df156fa31/conversation.md](ai-logs/2026/04/07/24aba72b-f0e6-43b8-9fdf-d51df156fa31/conversation.md).
+- [.github/instructions/aspnetcore-webapi.instructions.md](.github/instructions/aspnetcore-webapi.instructions.md), [.github/instructions/entity-framework-core-identity.instructions.md](.github/instructions/entity-framework-core-identity.instructions.md), [.github/instructions/automapper.instructions.md](.github/instructions/automapper.instructions.md), [.github/instructions/jwt-bearer-auth.instructions.md](.github/instructions/jwt-bearer-auth.instructions.md), [.github/instructions/swagger-openapi.instructions.md](.github/instructions/swagger-openapi.instructions.md), and [.github/instructions/xunit.instructions.md](.github/instructions/xunit.instructions.md) define stack-specific coding guidance for this API. Provenance log: [ai-logs/2026/04/07/b883ead3-9823-4a1b-af57-79c22016fff3/conversation.md](ai-logs/2026/04/07/b883ead3-9823-4a1b-af57-79c22016fff3/conversation.md).
 
-```
-
-git clone https://github.com/your-username/PostHubAPI.git
-
-```
-
-2. **Environment Setup**:
-
-- Ensure you have Visual Studio or another .NET compatible IDE installed.
-- Confirm that Entity Framework and AutoMapper are configured in the environment.
-
-3. **Execution**:
-
-- Open the project in your IDE.
-- Run the application.
-
-4. **Using the API**:
-
-- Utilize the provided routes and endpoints to interact with the API functionalities.
-
-## Authentication Configuration
-
-- In `Development`, JWT `RequireHttpsMetadata` is disabled to support local non-HTTPS metadata scenarios.
-- In non-development environments, JWT `RequireHttpsMetadata` is enabled by default.
-- Configure `JWT:Secret` outside source control before starting the API.
-
-### Local Secret Setup
-
-1. Initialize user secrets for the project:
-
-```powershell
-dotnet user-secrets init --project .\PostHubAPI.csproj
-```
-
-2. Store a development JWT signing secret locally:
-
-```powershell
-dotnet user-secrets set "JWT:Secret" "replace-with-a-long-random-secret" --project .\PostHubAPI.csproj
-```
-
-3. As an alternative, set the `JWT__Secret` environment variable instead of using user secrets.
-
-### Secret Rotation
-
-1. Generate a new signing secret.
-2. Update the user secret or `JWT__Secret` environment variable.
-3. Restart the API so new tokens are issued with the rotated secret.
+For local development setup and contributor workflow, start with [docs/developer-guide.md](docs/developer-guide.md).

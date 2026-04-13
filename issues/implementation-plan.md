@@ -1,5 +1,127 @@
 # Implementation Plan: Risk-and-Effort Prioritized
 
+## Test Expansion Plan (April 2026)
+
+### Goal
+
+Close the highest-value test coverage gaps identified in controllers, services, mapping, and startup behavior.
+
+### Current Status
+
+- Completed: Comment controller authorization and success-path integration tests.
+- In Progress: Planning remaining recommended tests.
+
+### Priority Sequence
+
+- T0 (Done): Comment controller integration tests (`CommentControllerAuthorizationTests`).
+- T1: Post service unit tests (`PostServiceTests`).
+- T2: Comment service unit tests (`CommentServiceTests`).
+- T3: Post controller behavior tests (`PostControllerTests`).
+- T4: User service negative-path tests (`UserServiceTests` expansion).
+- T5: JWT token service guardrail tests (`JwtTokenServiceTests` expansion).
+- T6: Startup/configuration behavior tests (`ProgramConfigurationTests`).
+- T7: AutoMapper profile tests (`MappingProfileTests`).
+
+### Test Work Item Files
+
+- [issues/tests/001-post-service-tests.md](tests/001-post-service-tests.md)
+- [issues/tests/002-comment-service-tests.md](tests/002-comment-service-tests.md)
+- [issues/tests/003-post-controller-tests.md](tests/003-post-controller-tests.md)
+- [issues/tests/004-user-service-negative-path-tests.md](tests/004-user-service-negative-path-tests.md)
+- [issues/tests/005-jwt-token-service-guardrail-tests.md](tests/005-jwt-token-service-guardrail-tests.md)
+- [issues/tests/006-program-configuration-tests.md](tests/006-program-configuration-tests.md)
+- [issues/tests/007-mapping-profile-tests.md](tests/007-mapping-profile-tests.md)
+
+### Work Packages
+
+#### WP1: Services Coverage (T1, T2)
+
+Objectives:
+
+- Validate success and failure branches in post/comment services.
+- Lock down `NotFoundException` behavior and persistence side effects.
+
+Tasks:
+
+1. Add `PostServiceTests` for get all/get by id/create/edit/delete.
+2. Add `CommentServiceTests` for get/create/edit/delete plus post-not-found flow.
+3. Use deterministic in-memory EF setup and AutoMapper profiles.
+
+Exit Criteria:
+
+- All service CRUD branches covered for success and not-found paths.
+- New tests pass reliably in isolated and full-suite runs.
+
+#### WP2: Controller Behavior Coverage (T3)
+
+Objectives:
+
+- Validate HTTP status codes beyond auth-only checks.
+- Verify model-state and not-found translations to API responses.
+
+Tasks:
+
+1. Add `PostControllerTests` for `GetAllPosts`, `GetPostById`, `EditPost`, `DeletePost`.
+2. Assert `400` for invalid model state and `404` for service not-found.
+3. Keep controllers thin by stubbing service contracts.
+
+Exit Criteria:
+
+- Core post controller action outcomes have explicit tests.
+- Regression confidence for status-code contracts is improved.
+
+#### WP3: Auth and Startup Guardrails (T4, T5, T6)
+
+Objectives:
+
+- Protect auth failure paths and startup configuration behavior.
+
+Tasks:
+
+1. Expand `UserServiceTests` with duplicate-email, identity-failure, unknown-user, bad-password cases.
+2. Expand `JwtTokenServiceTests` with null-user and missing-claim-field checks.
+3. Add `ProgramConfigurationTests` for JWT config requirements and environment-specific DB provider behavior.
+
+Exit Criteria:
+
+- Critical authentication edge cases are covered.
+- Startup fails fast with missing required JWT settings.
+
+#### WP4: Mapping Safety Net (T7)
+
+Objectives:
+
+- Detect DTO/entity mapping drift quickly.
+
+Tasks:
+
+1. Add `MappingProfileTests` to assert AutoMapper configuration validity.
+2. Add smoke mapping assertions for post and comment DTO flows.
+
+Exit Criteria:
+
+- Mapper configuration checks run in CI and fail on misconfiguration.
+
+### Execution Order and Parallelization
+
+- Sprint A: WP1 (services) + WP4 (mapping).
+- Sprint B: WP2 (controllers).
+- Sprint C: WP3 (auth/startup guardrails).
+
+Parallel Streams:
+
+- Stream 1: Service tests (WP1).
+- Stream 2: Controller tests (WP2).
+- Stream 3: Auth/startup and mapping tests (WP3, WP4).
+
+### Definition of Done
+
+1. All new test files compile and pass locally with `dotnet test`.
+2. No existing tests regress.
+3. New tests are deterministic and do not depend on execution order.
+4. Added tests cover both happy path and failure path per targeted area.
+5. Coverage trend improves in previously low-coverage files.
+
 ## Scope
 
 This plan covers all currently open GitHub issues and sequences implementation by combined risk and effort.
