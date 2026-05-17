@@ -22,7 +22,7 @@ public class CommentService(ApplicationDbContext context, IMapper mapper) : ICom
         throw new NotFoundException("Comment not found!!");
     }
 
-    public async Task<int> CreateNewCommnentAsync(int postId, CreateCommentDto newComment)
+    public async Task<int> CreateNewCommentAsync(int postId, CreateCommentDto newComment)
     {
         Post? post = await context.Posts.FirstOrDefaultAsync(c => c.Id == postId);
         if (post != null)

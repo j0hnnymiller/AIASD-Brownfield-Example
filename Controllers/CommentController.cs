@@ -32,7 +32,7 @@ public class CommentController(ICommentService commentService) : ControllerBase
         {
             if (ModelState.IsValid)
             {
-                var newCommentId = await commentService.CreateNewCommnentAsync(postId, dto);
+                var newCommentId = await commentService.CreateNewCommentAsync(postId, dto);
                 var locationUri = $"{Request.Scheme}://{Request.Host}/api/Comment/{newCommentId}";
                 return Created(locationUri, newCommentId);
             }

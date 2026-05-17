@@ -6,7 +6,7 @@ Low
 
 ## Description
 
-A public service method is named `CreateNewCommnentAsync` (typo), and the typo propagates through interface, implementation, and call sites. This reduces readability and maintainability.
+A public service method is named `CreateNewCommentAsync` (typo), and the typo propagates through interface, implementation, and call sites. This reduces readability and maintainability.
 
 ## Proposed Updates
 
