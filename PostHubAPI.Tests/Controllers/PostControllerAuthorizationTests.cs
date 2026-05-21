@@ -15,6 +15,7 @@ namespace PostHubAPI.Tests.Controllers;
 
 public class PostControllerAuthorizationTests
 {
+    private const int MaxUsernameLength = 20;
     private const string ValidIssuer = "https://localhost:5001";
     private const string ValidAudience = "https://localhost:4200";
     private const string Secret = "integration-test-secret-value-1234567890";
@@ -191,19 +192,33 @@ public class PostControllerAuthorizationTests
 
     private static async Task<string> RegisterAndGetJwtAsync(HttpClient client)
     {
-        var username = $"u{Guid.NewGuid():N}"[..20];
+        var validLengthUsername = string.Concat($"u{Guid.NewGuid():N}".Take(MaxUsernameLength));
+        var email = $"{validLengthUsername}@example.com";
         var registerResponse = await client.PostAsJsonAsync("/api/User/Register", new
         {
-            Email = $"{username}@example.com",
-            Username = username,
+            Email = email,
+            Username = validLengthUsername,
             Password = "Password123!",
             ConfirmPassword = "Password123!"
         });
         registerResponse.EnsureSuccessStatusCode();
 
         var token = await registerResponse.Content.ReadAsStringAsync();
-        Assert.False(string.IsNullOrWhiteSpace(token));
+        AssertValidJwtStructure(token);
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+        Assert.Equal(ValidIssuer, jwt.Issuer);
+        Assert.Contains(ValidAudience, jwt.Audiences, StringComparer.Ordinal);
+        Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Name && claim.Value == validLengthUsername);
+        Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Email && claim.Value == email);
         return token;
+    }
+
+    private static void AssertValidJwtStructure(string token)
+    {
+        Assert.False(string.IsNullOrWhiteSpace(token));
+        var jwtSegments = token.Split('.');
+        Assert.Equal(3, jwtSegments.Length);
+        Assert.All(jwtSegments, segment => Assert.False(string.IsNullOrWhiteSpace(segment)));
     }
 
     private static CreatePostDto CreatePostDto() =>
