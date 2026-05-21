@@ -192,12 +192,12 @@ public class PostControllerAuthorizationTests
 
     private static async Task<string> RegisterAndGetJwtAsync(HttpClient client)
     {
-        var validLengthUsername = string.Concat($"u{Guid.NewGuid():N}".Take(MaxUsernameLength));
-        var email = $"{validLengthUsername}@example.com";
+        var testUsername = string.Concat($"u{Guid.NewGuid():N}".Take(MaxUsernameLength));
+        var email = $"{testUsername}@example.com";
         var registerResponse = await client.PostAsJsonAsync("/api/User/Register", new
         {
             Email = email,
-            Username = validLengthUsername,
+            Username = testUsername,
             Password = "Password123!",
             ConfirmPassword = "Password123!"
         });
@@ -206,9 +206,9 @@ public class PostControllerAuthorizationTests
         var token = await registerResponse.Content.ReadAsStringAsync();
         AssertValidJwtStructure(token);
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
-        Assert.Equal(ValidIssuer, jwt.Issuer);
+        Assert.Equal(ValidIssuer, jwt.Issuer, StringComparer.Ordinal);
         Assert.Contains(ValidAudience, jwt.Audiences, StringComparer.Ordinal);
-        Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Name && claim.Value == validLengthUsername);
+        Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Name && claim.Value == testUsername);
         Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Email && claim.Value == email);
         return token;
     }
