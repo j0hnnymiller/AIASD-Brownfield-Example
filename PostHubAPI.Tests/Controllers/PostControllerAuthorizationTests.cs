@@ -73,6 +73,58 @@ public class PostControllerAuthorizationTests
         Assert.True(newPostId > 0);
     }
 
+    [Fact]
+    public async Task CreatePost_ReturnsCreated_WhenUsingLoginGeneratedJwt()
+    {
+        using var factory = CreateFactory();
+        using var client = CreateClient(factory);
+        var token = await RegisterAndGetJwtAsync(client);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Post")
+        {
+            Content = JsonContent.Create(CreatePostDto())
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreatePost_ReturnsUnauthorized_WhenJwtIssuerIsInvalid()
+    {
+        using var factory = CreateFactory();
+        using var client = CreateClient(factory);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Post")
+        {
+            Content = JsonContent.Create(CreatePostDto())
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(issuer: "https://invalid-issuer.example"));
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreatePost_ReturnsUnauthorized_WhenJwtAudienceIsInvalid()
+    {
+        using var factory = CreateFactory();
+        using var client = CreateClient(factory);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Post")
+        {
+            Content = JsonContent.Create(CreatePostDto())
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(audience: "https://invalid-audience.example"));
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     private static WebApplicationFactory<Program> CreateFactory()
     {
         Environment.SetEnvironmentVariable("JWT__ValidIssuer", ValidIssuer);
@@ -120,12 +172,12 @@ public class PostControllerAuthorizationTests
         return postId;
     }
 
-    private static string CreateJwt()
+    private static string CreateJwt(string? issuer = null, string? audience = null)
     {
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Secret));
         var token = new JwtSecurityToken(
-            issuer: ValidIssuer,
-            audience: ValidAudience,
+            issuer: issuer ?? ValidIssuer,
+            audience: audience ?? ValidAudience,
             claims:
             [
                 new Claim(ClaimTypes.Name, "integration-user"),
@@ -135,6 +187,23 @@ public class PostControllerAuthorizationTests
             signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256));
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private static async Task<string> RegisterAndGetJwtAsync(HttpClient client)
+    {
+        var username = $"u{Guid.NewGuid():N}"[..20];
+        var registerResponse = await client.PostAsJsonAsync("/api/User/Register", new
+        {
+            Email = $"{username}@example.com",
+            Username = username,
+            Password = "Password123!",
+            ConfirmPassword = "Password123!"
+        });
+        registerResponse.EnsureSuccessStatusCode();
+
+        var token = await registerResponse.Content.ReadAsStringAsync();
+        Assert.False(string.IsNullOrWhiteSpace(token));
+        return token;
     }
 
     private static CreatePostDto CreatePostDto() =>
